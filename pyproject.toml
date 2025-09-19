@@ -1,0 +1,10 @@
+[project]
+name = "10-resource-v2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pip>=25.2",
+    "wordcloud>=1.9.4",
+]
