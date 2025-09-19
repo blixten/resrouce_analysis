@@ -9,10 +9,9 @@ import pandas as pd
 from utils import get_r_count, get_additional_rs_count, get_r_over_time, get_flow_counts, get_main_flow, get_categories
 
 if 'OPENAI_API_KEY' in st.secrets:
-    client = OpenAI()
-    client.api_key = st.secrets["OPENAI_API_KEY"]
-else:
-    client = OpenAI()
+    OpenAI.api_key = st.secrets["OPENAI_API_KEY"]
+
+client = OpenAI()
 
 if "data" not in st.session_state.keys():
     with open("combined_results.json", "r", encoding="utf-8") as file:
