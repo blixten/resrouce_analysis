@@ -1,5 +1,7 @@
 import json
 import re
+from openai import OpenAI
+from pydantic import BaseModel
 
 def get_r_count(data):
     r_count = {}
@@ -144,4 +146,59 @@ def get_categories(data):
             categories.add(cat)
 
     return categories
+
+class Reference(BaseModel):
+    file_id: str
+    filename: str
+    index: int
+    
+class ChatResponse(BaseModel):
+    text: str
+    references: list [Reference] 
+
+def archive_chat(input: str) -> dict:
+
+    client = OpenAI()
+
+    store_ids = ["vs_689b1ffae5b08191b7f644dffbf5f424"]
+
+    response = client.responses.parse(
+            model="gpt-4.1",
+            temperature=0.2,
+            input=[
+                {
+                    "role": "system",
+                    "content":  [
+                        {
+                            "type": "input_text",
+                            "text": """
+                            Du är en expert på projekten inom Re:Source. Din uppgift är att svara på användarens frågor
+                            utifrån din kunskap från projektrapporterna. Om du inte har ett svar på frågan
+                            så svara du att du inte vet eller inte har tillgång till den kunskapen.
+                            Skicka med alla referenser du hittar i filerna, och hitta inte på några egna."""
+                        }
+                    ]
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                        "type": "input_text",
+                        "text": f""" 
+                                User prompt: {input}
+                        """
+                        },
+                    ]
+                }
+            ],
+            tools=[
+                {
+                    "type": "file_search",
+                    "vector_store_ids": store_ids
+                }
+            ],
+            text_format=ChatResponse
+        )   
+
+    return response.output_parsed
 

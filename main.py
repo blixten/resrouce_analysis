@@ -6,12 +6,12 @@ import matplotlib.pyplot as plt
 import altair as alt
 import pandas as pd
 
-from utils import get_r_count, get_additional_rs_count, get_r_over_time, get_flow_counts, get_main_flow, get_categories
+from utils import get_r_count, get_additional_rs_count, get_r_over_time, get_flow_counts, get_main_flow, get_categories, archive_chat
 
-if 'OPENAI_API_KEY' in st.secrets:
-    OpenAI.api_key = st.secrets["OPENAI_API_KEY"]
-
-client = OpenAI()
+if "OPENAI_API_KEY" in st.secrets:
+    client = OpenAI(api_key = st.secrets["OPENAI_API_KEY"])
+else:
+    client = OpenAI()
 
 if "data" not in st.session_state.keys():
     with open("combined_results.json", "r", encoding="utf-8") as file:
@@ -19,11 +19,14 @@ if "data" not in st.session_state.keys():
 
     st.session_state["data"] = data
 
+if "archive_chat" not in st.session_state.keys():
+    st.session_state["archive_chat"] = []
+
 with st.sidebar:
     st.subheader("Re:Source")
 
 
-tab_summary, tab_9R, tab_flows, tab_materials, tab_trl, tab_comm, tab_chat, tab_debug = st.tabs(["Övergripande", "9R Strategi", "Cirkulära flöden", "Material", "TRL", "Kommunikation", "Chat", "Debug"])
+tab_summary, tab_9R, tab_flows, tab_materials, tab_trl, tab_comm, tab_resulat, tab_chat, tab_debug = st.tabs(["Övergripande", "9R Strategi", "Cirkulära flöden", "Material", "TRL", "Kommunikation", "Resultat och effekter", "Chat", "Debug"])
 
 with tab_summary:
 
@@ -48,14 +51,15 @@ with tab_9R:
     st.subheader("9R-Strategier")
     st.markdown("**Huvudsaklig 9R-strategi**")
     st.write("De 9R-strategierna är ett ramverk för cirkulär ekonomi som hjälper företag och samhällen att minska resursanvändning och avfall. De omfattar stegen Refuse, Rethink, Reduce, Reuse, Repair, Refurbish, Remanufacture, Repurpose och Recycle. Strategierna används för att prioritera åtgärder som förlänger produkters livslängd, ersätter engångsbruk med smartare lösningar och slutligen återvinner material när andra alternativ inte längre är möjliga. Tanken är att gå från linjära till cirkulära system där resurser hålls i kretslopp så länge som möjligt.")
-    st.write("Analysen visar vilken strategi som är projektets huvudsakliga strategi")
-    r_count = get_r_count(st.session_state["data"])
+    r_count = st.session_state["data"]["nine_r"]["main_r_count"]
     st.bar_chart(r_count)
+    st.markdown("*Analysen visar vilken strategi som är projektets huvudsakliga 9R-strategi*")
 
+    st.write(st.session_state["data"]["nine_r"]["main_r_summary"])
 
     st.markdown("**Övriga 9R-strategi**")
     st.write("Analysen visar antalet övriga strategier som projekten tillämpar, förutom den huvudsakliga strategin.")
-    rs_counts = get_additional_rs_count(st.session_state["data"])
+    rs_counts = st.session_state["data"]["nine_r"]["r_count"]
     st.bar_chart(rs_counts)
     st.write(st.session_state["data"]["nine_r"]["summary"])
 
@@ -100,6 +104,7 @@ with tab_materials:
 with tab_trl:
     st.subheader("TRL")
     st.bar_chart(st.session_state["data"]["trl"]["count"])
+    st.write(st.session_state["data"]["trl"]["summary"])
 
 with tab_comm:
     st.subheader("Kommunikation")
@@ -170,10 +175,46 @@ with tab_comm:
     st.pyplot(plt)
 
 
+with tab_resulat:
+    st.subheader("Övergripande resultat och effekter")
+
+    st.write(st.session_state["data"]["results"]["summary"])
+
+    themes = st.session_state["data"]["results"]["themes"]
+    st.subheader("Teman")
+    for theme in themes:
+        st.markdown(f"**{theme["namn"]}**")
+        st.write(theme["beskrivning"])
 
 
 with tab_chat:
-    st.subheader("Chat kommer snart...")
+    archive_chat_box = st.container(height=500)
+     
+    for post in st.session_state["archive_chat"]:
+        archive_chat_box.chat_message(name=post["user"]).write(post["message"])
+        if post["user"] == "assistant" and post["references"]:
+            references = "Referenser:"
+            ref_list = []
+            for reference in post["references"]:
+                if reference.filename not in ref_list:
+                    references += f"\n - {reference.filename}"
+                    ref_list.append(reference.filename)
+            archive_chat_box.chat_message(name=post["user"]).write(references)
+
+
+ 
+    chat_input = st.chat_input("Chatta med projektresultaten", key="rapportchat")
+    if chat_input:
+        archive_chat_box.chat_message(name="user").write(chat_input)
+        st.session_state["archive_chat"].append({"message": chat_input, "user": "user"})
+
+        with st.spinner("Granskar arkiv och genererar svar..."):
+            response = archive_chat(chat_input)
+            st.session_state["archive_chat"].append({"message": response.text, "user": "assistant", "references": response.references})
+            #archive_chat_box.chat_message(name="assistant").write(response.text)
+
+        st.success("Svar genererat!")
+        st.rerun()
 
 with tab_debug:
     stores = client.vector_stores.list()
