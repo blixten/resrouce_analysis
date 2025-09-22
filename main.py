@@ -24,7 +24,8 @@ if "archive_chat" not in st.session_state.keys():
 
 with st.sidebar:
     st.subheader("Re:Source")
-
+    st.markdown("Detta material bygger på en AI-baserad analys av dokument kopplade till Re:Source-projekt. Syftet är att skapa en översiktlig portfolioanalys som synliggör mönster, teman och utvecklingsspår inom hållbar resursanvändning. Analysen utgår från ett antal övergripande frågor kring resurser, branscher, mål, strategier, resultat och hinder/möjligheter. Informationen ska ses som ett stöd för att förstå helhetsbilden och identifiera tendenser över tid – inte som en slutgiltig tolkning av enskilda projekt eller deras fulla innehåll.")
+    st.markdown("*All text på denna hemsida är kontruerad av AI, inklusive denna*")
 
 tab_summary, tab_9R, tab_flows, tab_materials, tab_trl, tab_comm, tab_resulat, tab_chat, tab_debug = st.tabs(["Övergripande", "9R Strategi", "Cirkulära flöden", "Material", "TRL", "Kommunikation", "Resultat och effekter", "Chat", "Debug"])
 
