@@ -189,6 +189,8 @@ with tab_resulat:
 
 
 with tab_chat:
+    st.subheader("Chatta med Re:Source dokumentarkiv")
+    st.markdown(f"*Dokumentarktivet består för tillfället av projektrapporter från **{len(st.session_state["data"]["projects"])}** projekt.*")
     archive_chat_box = st.container(height=500)
      
     for post in st.session_state["archive_chat"]:
